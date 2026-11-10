@@ -336,8 +336,14 @@
         <div class="champ"><label for="email">Adresse e-mail</label><input id="email" type="email" autocomplete="email" required value="${esc(memo)}"></div>
         <button class="btn" type="submit">Recevoir le lien de connexion</button>
       </form>
+      <button class="btn-texte" type="button" id="avec-mdp">Se connecter avec un mot de passe</button>
+      <form id="f-mdp" class="form" hidden>
+        <div class="champ"><label for="mdp">Mot de passe</label><input id="mdp" type="password" autocomplete="current-password"></div>
+        <button class="btn" type="submit">Se connecter</button>
+        <p class="aide">Le mot de passe se définit dans Réglages, après une première connexion par lien e-mail.</p>
+      </form>
       <form id="f-code" class="form" hidden>
-        <div class="alerte info">E-mail envoyé. Ouvre le lien qu'il contient <b>sur cet appareil</b>, ou saisis ici le code à chiffres s'il y en a un.</div>
+        <div class="alerte info">E-mail envoyé (expéditeur Supabase, vérifie les indésirables). Ouvre le lien qu'il contient <b>sur cet appareil</b>. S'il contient un code à chiffres, saisis-le ici.</div>
         <div class="champ"><label for="code">Code reçu par e-mail</label><input id="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*"></div>
         <button class="btn" type="submit">Valider le code</button>
         <button class="btn-texte" type="button" id="renvoyer">Changer d'adresse ou renvoyer</button>
@@ -360,6 +366,16 @@
       if (error) erreur(error, 'Code refusé');
     };
     document.getElementById('renvoyer').onclick = () => { fc.hidden = true; fm.hidden = false; };
+    const fp = document.getElementById('f-mdp');
+    document.getElementById('avec-mdp').onclick = () => { fp.hidden = !fp.hidden; if (!fp.hidden) document.getElementById('mdp').focus(); };
+    fp.onsubmit = async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim().toLowerCase();
+      if (!email) return toast('Saisis d\'abord ton adresse e-mail');
+      localStorage.setItem('email', email);
+      const { error } = await sb.auth.signInWithPassword({ email, password: document.getElementById('mdp').value });
+      if (error) erreur(/invalid/i.test(error.message) ? new Error('adresse ou mot de passe incorrect') : error, 'Connexion refusée');
+    };
   }
   function ecranSansAcces() {
     nav.innerHTML = '';
@@ -895,8 +911,21 @@
         <a class="ligne-objet" href="#/doublons"><span class="txt"><b>Doublons</b><span>${tousDoublons().length} à vérifier</span></span></a>
         <button class="ligne-objet" id="export" style="text-align:left"><span class="txt"><b>Exporter toute la collection</b><span>Fichier Excel, à garder où tu veux</span></span></button>
       </div>
+      <form id="f-nouveau-mdp" class="form carte" style="padding:14px">
+        <div class="champ"><label for="nouveau-mdp">Définir ou changer mon mot de passe</label><input id="nouveau-mdp" type="password" autocomplete="new-password" minlength="8"></div>
+        <p class="aide">Utile sur iPhone : l'appli installée sur l'écran d'accueil ne récupère pas la connexion faite par le lien e-mail dans Safari. 8 caractères au moins.</p>
+        <button class="btn second petit" type="submit">Enregistrer le mot de passe</button>
+      </form>
       <p class="aide">Connecté : ${esc(S.session.user.email)} · ${S.objets.length} fiches · ${S.series.length} séries</p>
       <button class="btn second" id="deco">Se déconnecter</button>`;
+    document.getElementById('f-nouveau-mdp').onsubmit = async (e) => {
+      e.preventDefault();
+      const password = document.getElementById('nouveau-mdp').value;
+      if (password.length < 8) return toast('8 caractères au moins');
+      const { error } = await sb.auth.updateUser({ password });
+      if (error) return erreur(error, 'Mot de passe non enregistré');
+      document.getElementById('nouveau-mdp').value = ''; toast('Mot de passe enregistré');
+    };
     document.getElementById('deco').onclick = async () => { await sb.auth.signOut(); };
     document.getElementById('export').onclick = exporter;
   }

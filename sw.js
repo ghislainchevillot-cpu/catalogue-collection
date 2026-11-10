@@ -1,8 +1,8 @@
 // Service worker minimal : rend l'appli installable et accélère le démarrage.
 // Réseau d'abord pour les fichiers de l'appli (mises à jour immédiates), cache en secours.
 // Les données (Supabase) et les images externes ne passent jamais par ce cache.
-const CACHE = 'catalogue-v1';
-const BASE = ['./', 'index.html', 'style.css?v=1', 'app.js?v=1', 'config.js?v=1', 'vendor/supabase.js', 'manifest.webmanifest', 'icons/icon-192.png'];
+const CACHE = 'catalogue-v2';
+const BASE = ['./', 'index.html', 'style.css?v=2', 'app.js?v=2', 'config.js?v=2', 'vendor/supabase.js', 'manifest.webmanifest', 'icons/icon-192.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(BASE)).then(() => self.skipWaiting()));
